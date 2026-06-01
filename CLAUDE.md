@@ -1,0 +1,77 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+A Compose Multiplatform library implementing the [Material Design data table](https://m2.material.io/components/data-tables) spec. Originally derived from the table implementation removed from Compose pre-1.0. Published to Maven Central as `com.seanproctor:datatable` and `com.seanproctor:datatable-material3`. Targets: Android, JVM (desktop), iOS (x64/arm64/simulatorArm64), JS, and Wasm/JS.
+
+Requires JDK 17+ to build (enforced in `settings.gradle.kts`).
+
+## Modules
+
+- **`:datatable`** — Core, unstyled implementation. Depends only on `compose.foundation`. This is where the layout, measurement, sorting, scrolling, and pagination logic lives.
+- **`:datatable-material3`** — Thin Material 3 styling layer. `api`-depends on `:datatable` and provides `DataTable`/`PaginatedDataTable` wrappers that supply a `Material3CellContentProvider` plus M3 defaults (dividers, 56dp header / 52dp rows, typography).
+- **`:demoApp`** — Multiplatform sample app exercising the library across all targets. Uses `:datatable-material3`.
+- **`build-logic`** — Included build with convention plugins (see below). Not a regular subproject.
+
+Note: the `android/`, `desktop/`, `ios/`, `iosApp/`, and `demo-common/` top-level directories are **not** included in `settings.gradle.kts` — only `:datatable`, `:datatable-material3`, and `:demoApp` are active modules.
+
+## Architecture
+
+The core abstraction layers, from low to high:
+
+1. **`BasicDataTable` / `BasicPaginatedDataTable`** (in `:datatable`) — The unstyled engine. `BasicDataTable` uses a `SubcomposeLayout` to measure rows/columns and render header, body, and footer slots. All sizing, alignment, scrolling, and sort-icon plumbing happens here.
+2. **`CellContentProvider`** — The styling seam between core and Material 3. `BasicDataTable` delegates rendering of each cell (`RowCellContent`) and header (`HeaderCellContent`, including the sort UI) to an injected provider. `DefaultCellContentProvider` renders content as-is; `Material3CellContentProvider` wraps it with M3 typography and sort icon buttons. To change how cells/headers look without touching layout, implement a `CellContentProvider`.
+3. **`DataTable` / `PaginatedDataTable`** (in `:datatable-material3`) — Public convenience wrappers that inject the M3 provider and defaults.
+
+Key pieces:
+- **DSL** (`DataTableDsl.kt`) — `DataTableScope.row { ... }` builds `TableRowScopeImpl`, and `TableRowScope.cell { ... }` collects cell composables. Rows carry `onClick`, `height`, `isHeader`, `isFooter`, `backgroundColor`. The content lambda runs eagerly to collect rows before layout.
+- **Columns** (`DataColumn.kt`) — Each column has an `alignment`, a `TableColumnWidth`, an optional `onSort` callback, and a header composable.
+- **Column widths** (`TableColumnWidth.kt`) — Sealed hierarchy: `Flex`, `Fixed`, `Fraction`, `Wrap`, `MinIntrinsic`, `MaxIntrinsic`, plus combinators `Min`/`Max` and `.flexible(flex)`. Drives the measurement pass.
+- **State** — `DataTableState` (+ `rememberDataTableState`) holds scroll state. `PaginatedDataTableState` (+ `rememberPaginatedDataTableState`) adds `count`, `pageIndex`, and `PageSize` (`FixedSize` or `FillMaxHeight`); the paginated content lambda receives `(fromIndex, toIndex)`.
+- **Sorting** — Driven by `sortColumnIndex`/`sortAscending` params plus per-column `onSort`. The provider renders the sort icon; `isSortIconTrailing` controls icon placement.
+
+## Build conventions
+
+Library modules apply two convention plugins from `build-logic` rather than configuring KMP/publishing inline:
+- **`datatable.library`** (`LibraryConventionPlugin`) — Applies the KMP, Android library, and Compose plugins and configures all targets via `configureKotlinMultiplatform` (`KotlinAndroid.kt`): `jvmToolchain(11)`, Android `minSdk=21`/`compileSdk=36`, namespace derived from module name, plus jvm/js/wasmJs/iOS targets.
+- **`datatable.publish`** (`PublishConventionPlugin`) — Vanniktech Maven publish to Maven Central, signing, and POM metadata.
+
+When adding a new published library module, apply both plugins (see `datatable/build.gradle.kts`) and add it to `settings.gradle.kts`.
+
+Dependencies are managed in `gradle/libs.versions.toml` (version catalog). The project version is set by `datatable.version` in `gradle.properties`.
+
+## Common commands
+
+```bash
+# Build everything
+./gradlew build
+
+# Run the demo on desktop (JVM)
+./gradlew :demoApp:run
+
+# Run the demo in the browser (Wasm/JS)
+./gradlew :demoApp:wasmJsBrowserDevelopmentRun
+
+# Desktop hot reload
+./gradlew :demoApp:hotRunJvm
+
+# Run all checks / tests across targets
+./gradlew check
+./gradlew allTests
+
+# Publish a local test repo (to ./build/testMaven of each module)
+./gradlew publishAllPublicationsToTestMavenRepository
+```
+
+There is currently no unit/instrumented test source set in the library modules.
+
+## Publishing / CI
+
+Releases are automated: creating a GitHub Release triggers `.github/workflows/build.yml`, which runs `./gradlew build` then `./gradlew publishAndReleaseToMavenCentral` on `macos-latest` (needed for iOS targets). Maven Central and GPG signing credentials come from repository secrets / `~/.gradle/gradle.properties`.
+
+## Conventions
+
+- Kotlin official code style. Import ordering and star-import thresholds are pinned in `.editorconfig` (`*,java.**,javax.**,kotlin.**,^`, no star imports). License/copyright templates live in `spotless/`.
+- Files derived from AOSP retain the Apache 2.0 header; new files in those modules should keep it consistent.
