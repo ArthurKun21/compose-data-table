@@ -92,3 +92,6 @@ app/release/*
 # General
 .DS_Store
 .externalNativeBuild
+
+# Waiting for refreshVersions to fix not writing blank versions.properties
+versions.properties
