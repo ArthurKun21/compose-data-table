@@ -1,4 +1,4 @@
-![Maven Central](https://img.shields.io/maven-central/v/com.seanproctor/data-table)
+![Maven Central](https://img.shields.io/maven-central/v/com.seanproctor/datatable)
 
 # Compose Data Table
 
@@ -15,13 +15,13 @@ Add the dependency to your gradle build file:
 Non-material version:
 
 ```kotlin
-implementation("com.seanproctor:data-table:<VERSION>")
+implementation("com.seanproctor:datatable:<VERSION>")
 ```
 
 Material 3:
 
 ```kotlin
-implementation("com.seanproctor:data-table-material3:<VERSION>")
+implementation("com.seanproctor:datatable-material3:<VERSION>")
 ```
 
 Draw a table
@@ -56,7 +56,9 @@ DataTable(
 }
 ```
 
-Draw a paginated table
+
+Draw paginated table
+
 ```kotlin
 PaginatedDataTable(
     columns = listOf(
@@ -70,9 +72,12 @@ PaginatedDataTable(
             Text("Column3")
         },
     ),
-    state = rememberPaginatedDataTableState(5),
-) {
-    for (rowIndex in 0 until 100) {
+    state = rememberPaginatedDataTableState(
+        count = 100,
+        pageSize = PageSize.FillMaxHeight
+    ),
+) { fromIndex, toIndex ->
+    for (rowIndex in fromIndex until toIndex) {
         row {
             onClick = { println("Row clicked: $rowIndex") }
             cell {
@@ -88,3 +93,4 @@ PaginatedDataTable(
     }
 }
 ```
+

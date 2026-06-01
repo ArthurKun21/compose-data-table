@@ -26,10 +26,7 @@ include(":datatable")
 include(":datatable-material3")
 
 // Demo apps
-include(":demo-common")
-include(":android")
-include(":desktop")
-include(":ios:framework")
+include(":demoApp")
 
 refreshVersions {
     file("build/tmp/refreshVersions").mkdirs()
@@ -41,7 +38,7 @@ refreshVersions {
 
 check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     """
-    Now in Android requires JDK 17+ but it is currently using JDK ${JavaVersion.current()}.
+    Compose Data Table requires JDK 17+ but it is currently using JDK ${JavaVersion.current()}.
     Java Home: [${System.getProperty("java.home")}]
     https://developer.android.com/build/jdks#jdk-config-in-studio
     """.trimIndent()
