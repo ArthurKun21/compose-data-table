@@ -61,8 +61,8 @@ import kotlin.math.min
  * ```
  * BasicPaginatedDataTable(
  *     columns = listOf(
- *         DataColumn(width = ColumnWidth.Fixed(100.dp)) { Text("ID") },
- *         DataColumn(width = ColumnWidth.Flex(1f)) { Text("Name") }
+ *         DataColumn(width = TableColumnWidth.Fixed(100.dp)) { Text("ID") },
+ *         DataColumn(width = TableColumnWidth.Flex(1f)) { Text("Name") }
  *     ),
  *     state = rememberPaginatedDataTableState(
  *         count = 100,

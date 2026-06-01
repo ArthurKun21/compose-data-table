@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.androidLibrary
 import com.seanproctor.datatable.configureKotlinMultiplatform
 import org.gradle.api.Plugin
 import org.gradle.api.Project

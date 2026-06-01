@@ -26,7 +26,10 @@ include(":datatable")
 include(":datatable-material3")
 
 // Demo apps
-include(":demoApp")
+include(":demo:shared")
+include(":demo:androidApp")
+include(":demo:desktopApp")
+include(":demo:webApp")
 
 refreshVersions {
     rejectVersionIf {

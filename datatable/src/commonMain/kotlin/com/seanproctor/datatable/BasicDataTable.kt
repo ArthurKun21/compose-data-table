@@ -71,8 +71,8 @@ private enum class SlotsEnum {
  * ```
  * BasicDataTable(
  *     columns = listOf(
- *         DataColumn(width = ColumnWidth.Fixed(100.dp)) { Text("Name") },
- *         DataColumn(width = ColumnWidth.Flex(1f)) { Text("Description") }
+ *         DataColumn(width = TableColumnWidth.Fixed(100.dp)) { Text("Name") },
+ *         DataColumn(width = TableColumnWidth.Flex(1f)) { Text("Description") }
  *     ),
  *     headerHeight = 56.dp,
  *     rowHeight = 52.dp

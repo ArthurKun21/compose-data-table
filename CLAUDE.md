@@ -4,18 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A Compose Multiplatform library implementing the [Material Design data table](https://m2.material.io/components/data-tables) spec. Originally derived from the table implementation removed from Compose pre-1.0. Published to Maven Central as `com.seanproctor:datatable` and `com.seanproctor:datatable-material3`. Targets: Android, JVM (desktop), iOS (x64/arm64/simulatorArm64), JS, and Wasm/JS.
+A Compose Multiplatform library implementing the [Material Design data table](https://m2.material.io/components/data-tables) spec. Originally derived from the table implementation removed from Compose pre-1.0. Published to Maven Central as `com.seanproctor:datatable` and `com.seanproctor:datatable-material3`. Library targets: Android, JVM (desktop), iOS (arm64/simulatorArm64), JS, and Wasm/JS.
 
-Requires JDK 17+ to build (enforced in `settings.gradle.kts`).
+Requires JDK 17+ to build (enforced in `settings.gradle.kts`). Built with Android Gradle Plugin 9 (built-in Kotlin) and Gradle 9.
 
 ## Modules
 
+Library:
 - **`:datatable`** — Core, unstyled implementation. Depends only on `compose.foundation`. This is where the layout, measurement, sorting, scrolling, and pagination logic lives.
 - **`:datatable-material3`** — Thin Material 3 styling layer. `api`-depends on `:datatable` and provides `DataTable`/`PaginatedDataTable` wrappers that supply a `Material3CellContentProvider` plus M3 defaults (dividers, 56dp header / 52dp rows, typography).
-- **`:demoApp`** — Multiplatform sample app exercising the library across all targets. Uses `:datatable-material3`.
-- **`build-logic`** — Included build with convention plugins (see below). Not a regular subproject.
 
-Note: the `android/`, `desktop/`, `ios/`, `iosApp/`, and `demo-common/` top-level directories are **not** included in `settings.gradle.kts` — only `:datatable`, `:datatable-material3`, and `:demoApp` are active modules.
+Demo (under `demo/`, all consume the library):
+- **`:demo:shared`** — KMP library (`com.android.kotlin.multiplatform.library`) holding the shared `App()` composable (`commonMain`) and the iOS `MainViewController` (`iosMain`, framework `baseName = "DemoApp"`). Targets android/jvm/wasmJs/iosArm64/iosSimulatorArm64.
+- **`:demo:androidApp`** — `com.android.application` (MainActivity + manifest), depends on `:demo:shared`.
+- **`:demo:desktopApp`** — `kotlin("jvm")` + Compose Desktop (`Main.kt`), depends on `:demo:shared`.
+- **`:demo:webApp`** — KMP wasmJs-only browser app (`main.kt` + `index.html`), depends on `:demo:shared`.
+- **`demo/iosApp`** — Xcode project (not a Gradle module). Links the `DemoApp` framework via a build phase that runs `:demo:shared:embedAndSignAppleFrameworkForXcode`; framework search path is `$(SRCROOT)/../shared/build/...`.
+
+The demo is split into per-platform app modules because AGP 9 no longer allows `com.android.application` to coexist with `org.jetbrains.kotlin.multiplatform` in one module — the Android app must depend on a separate KMP library module (`:demo:shared`).
+
+- **`build-logic`** — Included build with convention plugins (see below). Not a regular subproject.
 
 ## Architecture
 
@@ -35,12 +43,14 @@ Key pieces:
 ## Build conventions
 
 Library modules apply two convention plugins from `build-logic` rather than configuring KMP/publishing inline:
-- **`datatable.library`** (`LibraryConventionPlugin`) — Applies the KMP, Android library, and Compose plugins and configures all targets via `configureKotlinMultiplatform` (`KotlinAndroid.kt`): `jvmToolchain(11)`, Android `minSdk=21`/`compileSdk=36`, namespace derived from module name, plus jvm/js/wasmJs/iOS targets.
+- **`datatable.library`** (`LibraryConventionPlugin`) — Applies the KMP, Android library, and Compose plugins and configures all targets via `configureKotlinMultiplatform` (`KotlinAndroid.kt`): `jvmToolchain(11)`, Android `minSdk=21`/`compileSdk=36`, namespace derived from module name, plus jvm/js/wasmJs/iOS (arm64 + simulatorArm64) targets.
 - **`datatable.publish`** (`PublishConventionPlugin`) — Vanniktech Maven publish to Maven Central, signing, and POM metadata.
 
-When adding a new published library module, apply both plugins (see `datatable/build.gradle.kts`) and add it to `settings.gradle.kts`.
+When adding a new published library module, apply both plugins (see `datatable/build.gradle.kts`) and add it to `settings.gradle.kts`. The demo modules do **not** use these plugins (they configure KMP/Android inline and are not published).
 
-Dependencies are managed in `gradle/libs.versions.toml` (version catalog). The project version is set by `datatable.version` in `gradle.properties`.
+AGP 9 note: the `com.android.kotlin.multiplatform.library` Android target is configured via the `androidLibrary { }` DSL in `.kts` build files (`:demo:shared`). The precompiled convention plugin can't use that generated accessor, so `KotlinAndroid.kt` configures it through the named extension instead: `extensions.configure<KotlinMultiplatformAndroidLibraryTarget>("androidLibrary") { ... }`. The Android app module uses AGP 9's **built-in Kotlin** (no `kotlin.android` plugin — applying it is an error under AGP 9).
+
+Dependencies are managed in `gradle/libs.versions.toml` (version catalog). All plugin versions are declared once in the root `build.gradle.kts` `plugins { ... apply false }` block; modules then apply them via `alias(...)` without a version. The project version is set by `datatable.version` in `gradle.properties`.
 
 ## Common commands
 
@@ -49,13 +59,17 @@ Dependencies are managed in `gradle/libs.versions.toml` (version catalog). The p
 ./gradlew build
 
 # Run the demo on desktop (JVM)
-./gradlew :demoApp:run
+./gradlew :demo:desktopApp:run
 
 # Run the demo in the browser (Wasm/JS)
-./gradlew :demoApp:wasmJsBrowserDevelopmentRun
+./gradlew :demo:webApp:wasmJsBrowserDevelopmentRun
+
+# Build the Android demo APK / install on a device
+./gradlew :demo:androidApp:assembleDebug
+./gradlew :demo:androidApp:installDebug
 
 # Desktop hot reload
-./gradlew :demoApp:hotRunJvm
+./gradlew :demo:desktopApp:hotRun
 
 # Run all checks / tests across targets
 ./gradlew check
