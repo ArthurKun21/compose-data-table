@@ -23,7 +23,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build package
-        run: ./gradlew build
+        run: ./gradlew :datatable:build :datatable-material3:build
 
       - name: Publish release
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
