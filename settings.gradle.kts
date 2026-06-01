@@ -29,8 +29,6 @@ include(":datatable-material3")
 include(":demoApp")
 
 refreshVersions {
-    file("build/tmp/refreshVersions").mkdirs()
-    versionsPropertiesFile = file("build/tmp/refreshVersions/versions.properties")
     rejectVersionIf {
         candidate.stabilityLevel.isLessStableThan(current.stabilityLevel)
     }
