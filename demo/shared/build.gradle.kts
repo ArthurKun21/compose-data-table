@@ -10,9 +10,9 @@ plugins {
 kotlin {
     jvmToolchain(11)
 
-    androidLibrary {
+    android {
         namespace = "com.seanproctor.datatable.demo.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 24
     }
     jvm()

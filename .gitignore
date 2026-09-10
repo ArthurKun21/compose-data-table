@@ -87,6 +87,21 @@ app/release/*
 **/.kotlin/*
 .idea/graphql-settings.xml
 
+# Android Studio / IntelliJ machine-specific and auto-generated state
+.idea/AndroidProjectSystem.xml
+.idea/androidTestResultsUserPreferences.xml
+.idea/appInsightsSettings.xml
+.idea/caches/
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/inspectionProfiles/
+.idea/kotlinc.xml
+.idea/migrations.xml
+.idea/other.xml
+.idea/runConfigurations.xml
+.idea/studiobot.xml
+.idea/xcode.xml
+
 .fleet
 
 # General

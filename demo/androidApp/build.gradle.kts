@@ -6,10 +6,10 @@ plugins {
 
 android {
     namespace = "com.seanproctor.datatable.android"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         applicationId = "com.seanproctor.datatable.android"
         versionCode = 1
         versionName = "1.0"
