@@ -31,6 +31,9 @@ include(":demo:androidApp")
 include(":demo:desktopApp")
 include(":demo:webApp")
 
+// JVM micro-benchmarks (JMH via kotlinx-benchmark), not published
+include(":benchmark")
+
 refreshVersions {
     rejectVersionIf {
         candidate.stabilityLevel.isLessStableThan(current.stabilityLevel)

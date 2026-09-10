@@ -23,6 +23,9 @@ Demo (under `demo/`, all consume the library):
 
 The demo is split into per-platform app modules because AGP 9 no longer allows `com.android.application` to coexist with `org.jetbrains.kotlin.multiplatform` in one module — the Android app must depend on a separate KMP library module (`:demo:shared`).
 
+Benchmarks:
+- **`:benchmark`** — JVM-only JMH suite (kotlinx-benchmark) that renders tables into a headless `ImageComposeScene` and times full frames (compose + layout + draw). Not published. See `benchmark/README.md` for what each benchmark measures.
+
 - **`build-logic`** — Included build with convention plugins (see below). Not a regular subproject.
 
 ## Architecture
@@ -77,6 +80,10 @@ Dependencies are managed in `gradle/libs.versions.toml` (version catalog). All p
 
 # Publish a local test repo (to ./build/testMaven of each module)
 ./gradlew publishAllPublicationsToTestMavenRepository
+
+# Benchmarks (full run ~7 min; smoke run is quick; filter is a regex on class/method name)
+./gradlew :benchmark:benchmark
+./gradlew :benchmark:smokeBenchmark -PbenchmarkFilter=Scroll
 ```
 
 There is currently no unit/instrumented test source set in the library modules.
