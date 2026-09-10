@@ -4,14 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -24,40 +23,38 @@ import com.seanproctor.datatable.DefaultCellContentProvider
 import kotlin.math.min
 
 /**
- * A composable function that renders a paginated data table with support for dynamic page sizing
- * based on available viewport height.
+ * A composable function that renders a paginated data table with support for dynamic page sizing based on available
+ * viewport height.
  *
- * This table automatically calculates how many rows can fit in the available vertical space when
- * using [PageSize.FitHeight], making it ideal for displaying large datasets without scrolling.
- * The table handles pagination state management and dynamically adjusts the current page when
- * the page size changes.
+ * This table automatically calculates how many rows can fit in the available vertical space when using
+ * [PageSize.FitHeight], making it ideal for displaying large datasets without scrolling. The table handles
+ * pagination state management and dynamically adjusts the current page when the page size changes.
  *
- * @param columns List of column definitions specifying width, alignment, header content,
- * and optional sort handlers for each column.
- * @param state Pagination state managing current page, page size, and total item count.
- * Use [rememberPaginatedDataTableState] to create.
+ * @param columns List of column definitions specifying width, alignment, header content, and optional sort handlers for
+ *    each column.
+ * @param state Pagination state managing current page, page size, and total item count. Use
+ *    [rememberPaginatedDataTableState] to create.
  * @param modifier Modifier to be applied to the table container.
  * @param separator Composable function to render separators between rows. Defaults to no separator.
- * @param headerHeight Height of the header row. Defaults to [Dp.Unspecified] for automatic sizing.
- * Must be specified when using [PageSize.FitHeight].
- * @param rowHeight Height of data rows. Defaults to [Dp.Unspecified] for automatic sizing.
- * Must be specified when using [PageSize.FitHeight].
- * @param contentPadding Padding applied to the content within each cell.
- * Defaults to 16.dp horizontal padding.
+ * @param headerHeight Height of the header row. Defaults to [Dp.Unspecified] for automatic sizing. Must be specified
+ *    when using [PageSize.FitHeight].
+ * @param rowHeight Height of data rows. Defaults to [Dp.Unspecified] for automatic sizing. Must be specified when using
+ *    [PageSize.FitHeight].
+ * @param contentPadding Padding applied to the content within each cell. Defaults to 16.dp horizontal padding.
  * @param headerBackgroundColor Background color for the header row. Defaults to [Color.Unspecified].
  * @param footerBackgroundColor Background color for the footer section. Defaults to [Color.Unspecified].
- * @param footer Composable function to render footer content below the table (typically pagination controls).
- * Defaults to empty content.
- * @param cellContentProvider Provider for rendering cell content with custom styling and behavior.
- * Defaults to [DefaultCellContentProvider].
+ * @param footer Composable function to render footer content below the table (typically pagination controls). Defaults
+ *    to empty content.
+ * @param cellContentProvider Provider for rendering cell content with custom styling and behavior. Defaults to
+ *    [DefaultCellContentProvider].
  * @param sortColumnIndex Zero-based index of the currently sorted column, or null if no column is sorted.
  * @param sortAscending Whether the sorted column is in ascending order. Defaults to true.
  * @param logger Optional logging function for debugging table layout measurements.
- * @param content Lambda with [DataTableScope] receiver that defines table rows for the current page.
- * Receives [fromIndex] (inclusive) and [toIndex] (exclusive) parameters indicating which data items
- * should be rendered on the current page.
- *
+ * @param content Lambda with [DataTableScope] receiver that defines table rows for the current page. Receives
+ *    [fromIndex] (inclusive) and [toIndex] (exclusive) parameters indicating which data items should be rendered on the
+ *    current page.
  * @sample
+ *
  * ```
  * BasicPaginatedDataTable(
  *     columns = listOf(
@@ -112,20 +109,19 @@ fun BasicPaginatedDataTable(
         "rowHeight must be specified when using PageSize.FitHeight"
     }
     val density = LocalDensity.current
-    var footerHeightPx by remember { mutableStateOf(0) }
-    var heightPx by remember { mutableStateOf(0) }
+    var footerHeightPx by remember { mutableIntStateOf(0) }
+    var heightPx by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(heightPx, footerHeightPx) {
-        if (state.pageSize == PageSize.FitHeight) {
-            with(density) {
-                val rowSpacePx = heightPx.toFloat() - headerHeight.toPx() - footerHeightPx.toFloat()
-                val rowHeightPx = rowHeight.toPx()
-                val rowCount = (rowSpacePx / rowHeightPx).toInt()
-                if (rowCount != state.currentPageSize) {
-                    val firstVisible = state.currentPageSize * state.currentPageIndex
-                    state.currentPageSize = rowCount
-                    state.currentPageIndex = firstVisible / rowCount
-                }
+    fun updatePageSize() {
+        if (state.pageSize != PageSize.FitHeight || heightPx == 0) return
+        with(density) {
+            val rowSpacePx = heightPx.toFloat() - headerHeight.toPx() - footerHeightPx.toFloat()
+            val rowHeightPx = rowHeight.toPx()
+            val rowCount = (rowSpacePx / rowHeightPx).toInt()
+            if (rowCount != state.currentPageSize) {
+                val firstVisible = state.currentPageSize * state.currentPageIndex
+                state.currentPageSize = rowCount
+                state.currentPageIndex = firstVisible / rowCount
             }
         }
     }
@@ -134,15 +130,9 @@ fun BasicPaginatedDataTable(
         columns = columns,
         modifier = modifier
             .fillMaxHeight()
-            .onGloballyPositioned { coords ->
-                heightPx = coords.size.height
-                if (state.pageSize == PageSize.FitHeight) {
-                    with(density) {
-                        val heightPx = coords.size.height.toFloat() - headerHeight.toPx() - footerHeightPx
-                        val rowHeightPx = rowHeight.toPx()
-                        (heightPx / rowHeightPx).toInt()
-                    }
-                }
+            .onSizeChanged {
+                heightPx = it.height
+                updatePageSize()
             },
         state = remember(state) { DataTableState() },
         separator = separator,
@@ -152,9 +142,12 @@ fun BasicPaginatedDataTable(
         headerBackgroundColor = headerBackgroundColor,
         footerBackgroundColor = footerBackgroundColor,
         footer = {
-            Box(Modifier.onGloballyPositioned { coords ->
-                footerHeightPx = coords.size.height
-            }) {
+            Box(
+                Modifier.onSizeChanged {
+                    footerHeightPx = it.height
+                    updatePageSize()
+                }
+            ) {
                 footer()
             }
         },

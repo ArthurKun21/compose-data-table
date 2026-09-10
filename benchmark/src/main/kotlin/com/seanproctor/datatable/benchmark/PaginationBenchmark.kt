@@ -53,12 +53,9 @@ class PaginationBenchmark {
             PageMode.FitHeight -> PageSize.FitHeight
             PageMode.Fixed25 -> PageSize.FixedSize(25)
         }
-        // In the headless scene, effects run before the first layout, so with FitHeight the
-        // library briefly reports a page size of -1 (see BasicPaginatedDataTable's
-        // LaunchedEffect) and hands the content lambda a negative range. Clamp it; the
-        // next frame resolves the real page size.
-        fun page(from: Int, to: Int): List<Record> =
-            records.subList(from.coerceIn(0, recordCount), to.coerceIn(from.coerceIn(0, recordCount), recordCount))
+        // Deliberately unclamped: the library must never hand the content lambda an
+        // invalid range, even on the first frame before FitHeight has resolved.
+        fun page(from: Int, to: Int): List<Record> = records.subList(from, to)
 
         scene = benchmarkScene {
             state = rememberPaginatedDataTableState(count = recordCount, pageSize = pageSize)
